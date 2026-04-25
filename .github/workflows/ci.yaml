@@ -9,6 +9,6 @@ jobs:
   call-workflow:
     uses: L-and-D-Management-System/LnD/.github/workflows/reusable-ci.yaml@main
     with:
-      service_name: L-and-D-Management-System_user-service_dbe57bb2-50f8-4770-be31-faa2c83c39f6
+      service_name: L-and-D-Management-System_auth-service_0f22a64f-770d-47af-ba80-436796307ac6
       image_name: auth-service
     secrets: inherit
