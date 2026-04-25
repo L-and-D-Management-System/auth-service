@@ -1,0 +1,76 @@
+{{- define "auth-service.labels" -}}
+app: auth
+{{- end }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: auth-rollout
+  labels:
+    {{- include "auth-service.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "auth-service.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "auth-service.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: auth-cont
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          envFrom:
+            - configMapRef:
+                name: auth-config
+            - secretRef:
+                name: auth-secret
+  strategy:
+    blueGreen: 
+      activeService: auth-svc
+      previewService: auth-svc-preview
+      autoPromotionEnabled: true # Auto-promote for Auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-svc
+spec:
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+  selector:
+    {{- include "auth-service.labels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-svc-preview
+spec:
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+  selector:
+    {{- include "auth-service.labels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-config
+data:
+  PORT: "{{ .Values.service.port }}"
+  NODE_ENV: "production"
+  USER_SERVICE_URL: "http://user-svc:3002"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: auth-secret
+type: Opaque
+stringData:
+  MONGO_URI: {{ .Values.global.mongo.uri | quote }}
+  JWT_SECRET: {{ .Values.global.jwtSecret | quote }}
