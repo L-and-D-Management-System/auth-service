@@ -1,14 +1,22 @@
-name: CI
+name: CI/CD
 
 on:
+  pull_request:
+    branches: [main]
   push:
-    branches: [ main, develop ]
-  workflow_dispatch: # This adds the manual "Run Workflow" button
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
-  call-workflow:
-    uses: L-and-D-Management-System/LnD/.github/workflows/reusable-ci.yaml@main
+  pipeline:
+    uses: L-and-D-Management-System/l-and-d-main/.github/workflows/backend.yml@dev
+
     with:
-      service_name: auth-service
-      image_name: auth-service
+      service: "auth-service"
+      image: ghcr.io/l-and-d-management-system/auth-service
+      trigger: ${{ github.event_name }}
+
     secrets: inherit
